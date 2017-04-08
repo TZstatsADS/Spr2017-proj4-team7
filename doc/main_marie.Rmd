@@ -20,7 +20,7 @@ Those two papers can be found in the repository under doc/papers
 
 ```{r}
 
-packages.used=c("stringr")
+packages.used=c("stringr", "tex2vec")
 
 # Check packages that need to be installed.
 packages.needed=setdiff(packages.used, intersect(installed.packages()[,1], 
@@ -34,6 +34,7 @@ if(length(packages.needed)>0){
 
 # Load packages
 library(stringr)
+library(text2vec)
 
 # Source Functions
 source("../lib/helper_load.R")
@@ -81,13 +82,42 @@ for(i in 1:size){
 }
 ```
 
+Change Format
 ```{r}
 # Change Format - Data Frame
 df <- data.frame(matrix(unlist(dataset.small[[1]]), 
                         nrow=length(dataset.small[[1]]), byrow=T), 
                  stringsAsFactors=FALSE)
 
+# Columns' names
+names(df) <- c("author.id", "paper.id", "coauthors", "paper", "journal")
 ```
+
+Create a dtm of unique words
+```{r}
+it <- itoken(df$paper, 
+             preprocessor = tolower, 
+             tokenizer = word_tokenizer,
+             ids = df$paper.id,
+             # turn off progressbar because it won't look nice in rmd
+             progressbar = FALSE)
+vocab <- create_vocabulary(it, stopwords = c("a", "an", "the", "in", "on",
+                                             "at", "of", "above", "under"))
+```
+
+Here, we remove pre-defined stopwords, the words like “a”, “the”, “in”, “I”, “you”, “on”, etc, which do not provide much useful information. 
+
+Now that we have a vocabulary list, we can construct a document-term matrix.
+```{r}
+vectorizer <- vocab_vectorizer(vocab)
+dtm <- create_dtm(it, vectorizer)
+```
+
+Now we have DTM and can check its dimensions.
+```{r}
+dim(dtm)
+```
+As you can see, the DTM has `r nrow(dtm)` rows, equal to the number of citations, and `r ncol(dtm)`, equal to the number of unique terms excluding stopwords.
 
 
 ## Step 3: Implement Paper 2
