@@ -1,16 +1,17 @@
 ---
-title: "Project 4 - Example Main Script"
-author: "Jing Wu, Tian Zheng"
+title: "Project 4 - SVM"
+author: "Yue Gao"
 date: "3/22/2017"
 output: pdf_document
 ---
 
-This file is currently a template for implementing one of the suggested papers, Han, Zha, & Giles (2005). Due to the nature of the method, we only implement the method on a subset of the data, "AKumar.txt". In your project, you need to work on the whole dataset. You should follow the same structure as in this tutorial, but update it according to the papers you are assigned.
-
 ## Step 0: Load the packages, specify directories
 
 ```{r}
-if (!require("pacman")) install.packages("pacman")
+library(e1071)
+library(RTextTools)
+library(klaR)
+library(pacman)
 pacman::p_load(text2vec, dplyr, qlcMatrix, kernlab, knitr)
 
 setwd("~/GitHub/Spr2017-proj4-team7/")
@@ -20,7 +21,6 @@ setwd("~/GitHub/Spr2017-proj4-team7/")
 
 ## Step 1: Load and process the data
 
-For each record in the dataset, there are some information we want to extract and store them in a regular form: canonical author id, coauthors, paper title, publication venue title. You may need to find regular matched in the input string vectors by using regex in R. Here is a tutorial for regular expression in R, which might help you <https://rstudio-pubs-static.s3.amazonaws.com/74603_76cd14d5983f47408fdf0b323550b846.html>
 
 ```{r}
 names<-list.files(path = "../data/nameset", pattern = "*.txt")
@@ -50,38 +50,31 @@ l1$PaperID <- rownames(l1)
 mylist[[i]]<-l1
 }
 
-mylist[[i]]
-
 ```
 
 ## Step 2: Feature design
 
-Following the section 3.1 in the paper, we want to use paper titles to design features for citations. As the notation used in the paper, we want to find a $m$-dimensional citation vector $\alpha_i$ for each citation $i$, $i=1,...,n$. In this dataset, $n=$ `r nrow(AKumar)`. We study "TF-IDF" (term frequency-inverse document frequency) as suggested in the paper.
-
-TF-IDF is a numerical statistics that is intended to reflect how important a word is to a document in a collection or corpus. It is often used as a weighting factor in information retrieval, text mining, and user modeling. The TF-IDF value increases proportionally to the number of times a word appears in the document, but is offset by the frequency of the word in the corpus, which helps to adjust for the fact that some words appear more frequently in general.
-
-$$
-\begin{aligned}
-\mbox{TF}(t) &=\frac{\mbox{Number of times term $t$ appears in a document}}{\mbox{Total number of terms in the document}}\\
-\mbox{IDF}(t) &=\log{\frac{\mbox{Total number of documents}}{\mbox{Number of documents with term $t$ in it}}}\\
-\mbox{TF-IDF}(t) &=\mbox{TF}(t)\times\mbox{IDF}(t)
-\end{aligned}
-$$
-
-To compute TF-IDF, we first need to construct a document-term matrix (DTM). In other words, the first step is to vectorize text by creating a map from words to a vector space. There are some good packages you could use for text mining (probably you have tried during first project, you don't need to follow my code if you are familiar with other package), e.g. *text2vec, tm, tidytext*. Here, we are going to use *text2vec* package. A good tutorial can be found here, <https://cran.r-project.org/web/packages/text2vec/vignettes/text-vectorization.html>.
 
 Let’s first create a vocabulary-based DTM. Here we collect unique terms from all documents and mark each of them with a unique ID using the  `create_vocabulary()` function. We use an iterator to create the vocabulary.
 ```{r}
-it_train <- itoken(AKumar$Paper, 
+mydtm<-list()
+for (i in names){
+it_train <- itoken(mylist[[i]]$Paper, 
              preprocessor = tolower, 
              tokenizer = word_tokenizer,
-             ids = AKumar$PaperID,
+             ids = mylist[[i]]$PaperID,
              # turn off progressbar because it won't look nice in rmd
              progressbar = FALSE)
 vocab <- create_vocabulary(it_train, stopwords = c("a", "an", "the", "in", "on",
-                                                   "at", "of", "above", "under"))
+                                                   "at", "of", "above", "under","by","for","and","with","to","about"))
+vectorizer <- vocab_vectorizer(vocab)
+dtm_train <- create_dtm(it_train, vectorizer)
 
-vocab
+mydtm[[i]]<-dtm_train
+}
+#check if any high-frequency stopwords
+vocab1=vocab[["vocab"]]
+vocab1<-vocab1[order(-terms_counts),]
 ```
 
 Here, we remove pre-defined stopwords, the words like “a”, “the”, “in”, “I”, “you”, “on”, etc, which do not provide much useful information. 
@@ -90,6 +83,7 @@ Now that we have a vocabulary list, we can construct a document-term matrix.
 ```{r}
 vectorizer <- vocab_vectorizer(vocab)
 dtm_train <- create_dtm(it_train, vectorizer)
+
 ```
 
 Now we have DTM and can check its dimensions.
@@ -97,25 +91,45 @@ Now we have DTM and can check its dimensions.
 dim(dtm_train)
 ```
 
-As you can see, the DTM has `r nrow(dtm_train)` rows, equal to the number of citations, and `r ncol(dtm_train)`, equal to the number of unique terms excluding stopwords.
 
-Then, we want to use DTM to compute TF-IDF transformation on DTM.
+## Step 3: SVM
+
+
+
 ```{r}
-tfidf <- TfIdf$new()
-dtm_train_tfidf <- fit_transform(dtm_train, tfidf)
-```
 
-## Step 3: Clustering
-
-Following suggestion in the paper, we carry out spectral clustering on the Gram matrix of the citation vectors by using R function `specc()` in *kernlab*. The number of clusters is assumed known as stated in the paper.
-```{r}
 start.time <- Sys.time()
-result_sclust <- specc(as.matrix(dtm_train_tfidf), 
-                       centers=length(unique(AKumar$AuthorID)))
+results<-vector()
+
+for (i in names){
+  
+AuthorID=mylist[[i]]$AuthorID
+data=as.matrix(mydtm[[i]])
+
+L=nrow(data)
+t=0.5
+train_idx<-sample(L,floor(L*t))
+train_data<-data[train_idx,]
+test_data<-data[-train_idx,]
+train_author<-AuthorID[train_idx]
+test_author<-AuthorID[-train_idx]
+bsvm <- svmlight(train_author ~ train_data,pathsvm="~/svm_light")
+
+svm.pred<- predict(bsvm,as.data.frame(test_data))
+er<-sum(svm.pred$class!=test_author)/length(test_author)
+results<-c(results,er)
+print(paste(i,"error rate is ", round(er*100,2), "%."))
+
+
+
+
+}
 end.time <- Sys.time()
 time_sclust <- end.time - start.time
-table(result_sclust)
+
+
 ```
+
 
 We can also using hierarchical clustering method under the cosine distance. The intention of using a different clustering method is just to let you know how to compare performance between various methods. 
 ```{r}
@@ -149,7 +163,7 @@ $$
 $$
 
 ```{r}
-source('~/Dropbox/Project4_WhoIsWho/lib/evaluation_measures.R')
+source('.../lib/evaluation_measures.R')
 matching_matrix_hclust <- matching_matrix(AKumar$AuthorID,result_hclust)
 performance_hclust <- performance_statistics(matching_matrix_hclust)
 matching_matrix_sclust <- matching_matrix(AKumar$AuthorID,result_sclust)
