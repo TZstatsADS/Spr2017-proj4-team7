@@ -16,7 +16,29 @@ The goal of this report is to implement and compare two scientific publications.
 (2) Author disambiguation using error-driven machine learning with a ranking loss function (Culotta et al. [2007]) - we will study the C/E/Pc part os this paper
 Those two papers can be found in the repository under doc/papers
 
-## Step 0: Load Pakages
+## Step 0: Load Pakages and Functions
+
+```{r}
+
+packages.used=c("stringr")
+
+# Check packages that need to be installed.
+packages.needed=setdiff(packages.used, intersect(installed.packages()[,1], 
+                                                 packages.used))
+
+# Install packages
+if(length(packages.needed)>0){
+  install.packages(packages.needed, dependencies = TRUE,
+                   repos='http://cran.us.r-project.org')
+}
+
+# Load packages
+library(stringr)
+
+# Source Functions
+source("../lib/helper_load.R")
+```
+
 
 ## Step 1: Load and Process data
 
@@ -27,10 +49,25 @@ The dataset is downloaded from http://clgiles.ist.psu.edu/data/
 clusterid citationid authors;authors;...<>paper title<>publication venue title, where clusterid indicates the canonical author id.
 
 ```{r}
-"../nameset/*"
-AKumar <- data.frame(scan("../data/nameset/AKumar.txt",
-                          what = list(Coauthor = "", Paper = "", Journal = ""),
-                          sep=">", quiet=TRUE),stringsAsFactors=FALSE)
+### Dataset - Extract Files' Names
+files <- list.files(path = "../data/nameset", pattern = "*.txt")
+files <- substr(files, 1, nchar(files)-4)
+# Create list of auhtors with good format "F Lastname"
+authors <- paste(substring(files, 1, 1), " ", 
+                 substring(files, 2, nchar(files)), sep="")
+
+### Upload & Clean Dataset
+# Format: Nested List - Upper Level: per homonym - Lower Level: one list per record
+# Initialize dataset
+dataset <- list(length(files))
+for(i in 1:length(files)){
+  temp <- as.list(readLines(paste0("../data/nameset/", files[i],".txt")))
+  dataset[[i]] <- lapply(temp, clean.record, author=authors[i])
+}
+```
+
+```{r}
+
 ```
 
 
