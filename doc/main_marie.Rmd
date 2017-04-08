@@ -1,7 +1,46 @@
 ---
-title: "Project 4 - Example Main Script"
+title: "Project 4 - Author Name Disambiguation"
 author: "Marie Schiltz"
 date: "4/7/2017"
 output: pdf_document
 ---
+
+In this report we will study different methods of **Author Name Disambiguation**. It's the problem of determining whether records in a publications database refer to the same person.
+
+There are two major challenges in author name disambiguation, synonyms and homonyms. In this project we focuses on the second challenge.
+
+We will use domain specific knowledge such as co-aurthors, title of publications and title of journals to perform this task.
+
+The goal of this report is to implement and compare two scientific publications.
+(1)  Two supervised learning approaches for name disambiguation in author citations (Han et al. [2004]) - we will study the SVM part of this paper
+(2) Author disambiguation using error-driven machine learning with a ranking loss function (Culotta et al. [2007]) - we will study the C/E/Pc part os this paper
+Those two papers can be found in the repository under doc/papers
+
+## Step 0: Load Pakages
+
+## Step 1: Load and Process data
+
+The dataset is downloaded from http://clgiles.ist.psu.edu/data/
+- There are 14 .txt files in the data folder. Each file is a collection of ambiguous names and associtated citations. e.g. AGupta.txt is the citation files of 26 “A. Gupta”s. The 14 canonical names are top ranked ambiguous names, such as “J. Lee”, “J Smith”, “S. Lee”and “Y. Chen” from the DBLP bibliography.
+- The datasets are pre-processed as follows. All the author names in the citations were simpli- fied to first name initial and last name. For example, “Yong-Jik Kim” was simplified to “Y. Kim”. A reason for such simplification is that the first name initial and last name format is popular in citation records. Publication dates are eliminate from citations.
+- All citations in the raw data are in the format of
+clusterid citationid authors;authors;...<>paper title<>publication venue title, where clusterid indicates the canonical author id.
+
+```{r}
+"../nameset/*"
+AKumar <- data.frame(scan("../data/nameset/AKumar.txt",
+                          what = list(Coauthor = "", Paper = "", Journal = ""),
+                          sep=">", quiet=TRUE),stringsAsFactors=FALSE)
+```
+
+
+## Step 2: Implement Paper 1
+
+**Brief Description of the Paper**
+
+## Step 3: Implement Paper 2
+
+**Brief Description of the Paper**
+
+## Step 4: Comparison of the two methods
 
