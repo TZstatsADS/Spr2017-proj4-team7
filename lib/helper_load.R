@@ -46,7 +46,7 @@ clean.record <- function(line, author){
     coauthor_list <- coauthor_list[-match_ind]
   }
   
-  coauthors <- paste(coauthor_list, collapse=";")
+  coauthors <- paste(coauthor_list, collapse=" ")
   paper_title <- line.str[2]
   journal_name <- line.str[3]
   

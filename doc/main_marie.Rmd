@@ -12,8 +12,8 @@ There are two major challenges in author name disambiguation, synonyms and homon
 We will use domain specific knowledge such as co-aurthors, title of publications and title of journals to perform this task.
 
 The goal of this report is to implement and compare two scientific publications.
-(1)  Two supervised learning approaches for name disambiguation in author citations (Han et al. [2004]) - we will study the SVM part of this paper
-(2) Author disambiguation using error-driven machine learning with a ranking loss function (Culotta et al. [2007]) - we will study the C/E/Pc part os this paper
+(Paper 2)  Two supervised learning approaches for name disambiguation in author citations (Han et al. [2004]) - we will study the SVM part of this paper
+(Paper 5) Author disambiguation using error-driven machine learning with a ranking loss function (Culotta et al. [2007]) - we will study the C/E/Pc part os this paper
 Those two papers can be found in the repository under doc/papers
 
 ## Step 0: Load Pakages and Functions
@@ -35,9 +35,13 @@ if(length(packages.needed)>0){
 # Load packages
 library(stringr)
 library(text2vec)
+library(caret)
+library(gmum.r)
+library(e1071)
 
 # Source Functions
 source("../lib/helper_load.R")
+source("../lib/helper_model.R")
 ```
 
 
@@ -67,33 +71,32 @@ for(i in 1:length(files)){
 }
 ```
 
-## Step 2: Implement Paper 1
+## Step 2: Implement Paper 2
 
 **Brief Description of the Paper**
+[TO DO - Write Description - Marie: I already have a draft]
 
-
+**Feature Creation**
 ```{r}
-# Use small dataset to begin with
-size <- 2
-dataset.small <- list(size)
-for(i in 1:size){
-  temp <- as.list(readLines(paste0("../data/nameset/", files[i],".txt")))
-  dataset.small[[i]] <- lapply(temp, clean.record, author=authors[i])
-}
+# Parameters
+i <- 1
+attribute <- "paper"
 ```
 
-Change Format
+The very first step is to process the clean data and to extract the necessary features. At first, we will conduct the evaluation of the paper on the first dataset only (the name set is A Gupta)
+
+We will process the data in a dataframe.
 ```{r}
 # Change Format - Data Frame
-df <- data.frame(matrix(unlist(dataset.small[[1]]), 
-                        nrow=length(dataset.small[[1]]), byrow=T), 
+df <- data.frame(matrix(unlist(dataset[[1]]), 
+                        nrow=length(dataset[[1]]), byrow=T), 
                  stringsAsFactors=FALSE)
 
-# Columns' names
+# Update columns' names
 names(df) <- c("author.id", "paper.id", "coauthors", "paper", "journal")
 ```
 
-Create a dtm of unique words
+Let’s first create a vocabulary-based DTM. Here we collect unique terms from all records and mark each of them with a unique ID using the  `create_vocabulary()` function. We use an iterator to create the vocabulary.
 ```{r}
 it <- itoken(df$paper, 
              preprocessor = tolower, 
@@ -104,23 +107,122 @@ it <- itoken(df$paper,
 vocab <- create_vocabulary(it, stopwords = c("a", "an", "the", "in", "on",
                                              "at", "of", "above", "under"))
 ```
-
 Here, we remove pre-defined stopwords, the words like “a”, “the”, “in”, “I”, “you”, “on”, etc, which do not provide much useful information. 
 
-Now that we have a vocabulary list, we can construct a document-term matrix.
+Before processing the features, we need to split the training and the testing sets. Each author is considered as a different class. To unsure balanceness, we will split data per class. We will put 80% of each record per author (not per name set) and put it on the training set.
+```{r}
+# Split training & testing set
+df$author.id <- factor(df$author.id)
+set.seed(123) # for reproducibility
+inTrain <- createDataPartition(df$author.id, p=0.8, list=FALSE)
+df.train <- df[inTrain,]
+df.test <- df[-inTrain,]
+```
+
+Now that we have a vocabulary list and specific train and test sets, we can construct document-term matrices.
 ```{r}
 vectorizer <- vocab_vectorizer(vocab)
-dtm <- create_dtm(it, vectorizer)
+# Train set
+it.train <- itoken(df.train$paper, 
+             preprocessor = tolower, 
+             tokenizer = word_tokenizer,
+             ids = df.train$paper.id,
+             # turn off progressbar because it won't look nice in rmd
+             progressbar = FALSE)
+dtm.train <- create_dtm(it.train, vectorizer)
+
+# Test set
+it.test <- itoken(df.test$paper, 
+             preprocessor = tolower, 
+             tokenizer = word_tokenizer,
+             ids = df.test$paper.id,
+             # turn off progressbar because it won't look nice in rmd
+             progressbar = FALSE)
+dtm.test <- create_dtm(it.test, vectorizer)
 ```
 
 Now we have DTM and can check its dimensions.
 ```{r}
-dim(dtm)
+dim(dtm.train)
 ```
-As you can see, the DTM has `r nrow(dtm)` rows, equal to the number of citations, and `r ncol(dtm)`, equal to the number of unique terms excluding stopwords.
+As you can see, the DTM has `r nrow(dtm.train)` rows, equal to the number of citations, and `r ncol(dtm.train)`, equal to the number of unique terms excluding stopwords.
+
+It's always easier to work with dataframe to pass them to a machine learning function, so we'll change the format of the document-term matrices.
+```{r}
+dtm.test <- as.data.frame(as.matrix(dtm.test))
+dtm.train <- as.data.frame(as.matrix(dtm.train))
+# Add labels to the trainnig set
+dtm.train <- cbind(df.train$author.id, dtm.train)
+names(dtm.train)[1] <- "author.id"
+```
+
+**SVM Evaluation**
+
+The paper uses a SVM classifier to differentiate the differetn homonyms. They use the scheme "one-versus-all". We will evaluate this version and also the "one-versus-one version". We will also try different type of SVM classifier and tune the parameters by using cross-validation.
+
+Note that we will scale the data and we are using the default value of epsilon (0.1) which ensures that if a feature is not seen in the training set, it will not be associated a probability of 0 when discovered in the test set. [TO DO - More specific explanation of this point]
+
+One-Versus-All Method 
+[TO DO - Implement CV manually for parameter C - add time]
+```{r}
+svm.fit <- SVM(author.id~., data=dtm.train, 
+               class.type="one.versus.all", verbosity=0)
+```
+
+One-Versus-One Method
+We use the e1071 library, this library implemetns the one-versus-one method for SVM. The tune function uses by default 10-folds cross validation.
+```{r}
+# Fit Linear SVM
+start.time <- Sys.time()
+tune.svm.linear <- tune(svm, author.id~., 
+                        data=dtm.train, kernel="linear",                                                    ranges=list(cost=c(0.1,1,10,100,1000)))
+end.time <- Sys.time()
+time.linear.one <- end.time - start.time
+
+tune.svm.linear$best.performance
+tune.svm.linear$best.parameters
+```
 
 
-## Step 3: Implement Paper 2
+```{r}
+# Fit Radial SVM
+start.time <- Sys.time()
+tune.svm.radial <- tune(svm, author.id~., data=dtm.train, kernel="radial", 
+                        ranges=list(cost=c(0.1,1,10,100,1000), 
+                                    gamma=c(0.5,1,2,3,4)))
+end.time <- Sys.time()
+time.radial.one <- end.time - start.time
+
+tune.svm.radial$best.performance
+tune.svm.radial$best.parameters
+```
+
+[TO DO - Explain Comparisons of the methods]
+Given the results of this analysis, we will be using the ** scheme with a ** kernel. 
+We will keep using this scheme until the end of the analysis but we will adapt the parameter C for each name set (using cross-validation).
+
+**Run model on all datasets for all attributes**
+
+For more clarity, we put everything into one function `run.model` which take into parameters the id of one name set, the dataset, and the attibute you want to use.
+```{r}
+results <- data.frame(paper=double(),
+                      journal=double(), 
+                      coauthors=double(),
+                      hybrid=double())
+for (attribute in c("paper", "coauthors", "journal", "hybrid")){
+  for (name_set in 1:length(dataset)){
+    results[name_set, attribute] <- run.model(name_set, attribute, dataset)
+  }
+}
+```
+
+[TO DO]
+- Draw Table and BoxPlot from result table (for the table see table 6 in the paper) and save them in the output folder
+- Do Summary Table (see table 7 in the paper) and save it in the output folder
+- Overall comment on the reproducibility of this paper
+- Check Cleaning of data
+
+## Step 3: Implement Paper 5
 
 **Brief Description of the Paper**
 
