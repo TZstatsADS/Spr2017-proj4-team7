@@ -66,14 +66,29 @@ for(i in 1:length(files)){
 }
 ```
 
-```{r}
-
-```
-
-
 ## Step 2: Implement Paper 1
 
 **Brief Description of the Paper**
+
+
+```{r}
+# Use small dataset to begin with
+size <- 2
+dataset.small <- list(size)
+for(i in 1:size){
+  temp <- as.list(readLines(paste0("../data/nameset/", files[i],".txt")))
+  dataset.small[[i]] <- lapply(temp, clean.record, author=authors[i])
+}
+```
+
+```{r}
+# Change Format - Data Frame
+df <- data.frame(matrix(unlist(dataset.small[[1]]), 
+                        nrow=length(dataset.small[[1]]), byrow=T), 
+                 stringsAsFactors=FALSE)
+
+```
+
 
 ## Step 3: Implement Paper 2
 
