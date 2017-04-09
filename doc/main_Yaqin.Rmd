@@ -1,0 +1,91 @@
+---
+title: "project4_paper5_features"
+author: "Yaqin Li (yl3578)"
+date: "4/8/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Packages
+
+```{r}
+packages<-c("stringr", "text2vec","plyr")
+
+# Check packages that need to be installed.
+packages.needed<-setdiff(packages.used, intersect(installed.packages()[,1], 
+                                                 packages))
+
+# Install packages
+if(length(packages.needed)>0){
+  install.packages(packages.needed, dependencies = TRUE,
+                   repos='http://cran.us.r-project.org')
+}
+
+# Load packages
+library(stringr)
+library(text2vec)
+library(plyr)
+```
+
+##Data Input
+```{r}
+names<-list.files(path = "../data/nameset", pattern = "*.txt")
+
+names <- substr(names, 1, nchar(names)-4)
+
+authors <- paste(substring(names, 1, 1), " ", 
+                 substring(names, 2, nchar(names)), sep="")
+
+dataset <- list(length(names))
+
+for(i in 1:length(names)){
+  dataset[[i]]<-list(3)
+  dataset[[i]][[1]]<-authors[i]
+  dataset[[i]][[2]]<- readLines(paste0("../data/nameset/", names[i],".txt"))
+  dataset[[i]][[3]]<-length(dataset[[i]][[2]])
+}
+```
+
+##Data frame
+
+```{r}
+df_form<-function(l){
+  df1<-do.call(rbind,str_split(l[[2]],"<>"))
+  
+  pattern1<-"[0-9]+_[0-9]+"
+  
+  pattern2<-strsplit(l[[1]]," ")
+  pattern2<-paste0(pattern2[[1]][1],"[a-z]?\ ",pattern2[[1]][2],"[:punct:]?[;]?[:punct:]?")
+  
+  #Author ID and Paper NO.
+  ID<-unlist(regmatches(df1[,1], gregexpr(pattern1, df1[,1])))
+  n1<-nchar(ID)
+  ID<-do.call(rbind,str_split(ID,"_"))
+  
+  #Title of Paper
+  paper<-df1[,2]
+  
+  #Journal
+  journal<-df1[,3]
+  
+  #Author name
+  quest_author<-rep(l[[1]],l[[3]])
+  
+  #Coauthor
+  coauthor<-sub(paste0(pattern1," "),"",df1[,1])
+  coauthor<-sub(pattern2,"",coauthor)
+
+  
+  df<-data.frame(author.id=ID[,1],paper.no=ID[,2],quest_author=quest_author,coauthor=coauthor,paper=paper,journal=journal)
+  return(df)
+}
+
+df<-llply(dataset,df_form)
+
+save(df,file="../output/dataframe.Rdata")
+```
+
+
