@@ -1,0 +1,58 @@
+---
+title: "main"
+author: "liangbin Chen"
+date: "4/8/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+
+
+```{r}
+training<-function(d,tau=0.001){
+  n<-nrow(d)
+  a<-rep(1,ncol(d))
+  i<-n
+  a0<-0
+  while(sqrt((a-a0)%*%(a-a0))>=tau){
+    a0<-a
+    j<-T
+    k<-n
+    while(j){
+      cl<-km_new(d,a,k)
+      j<-judge(d,cl,k)
+      k<-k-1
+    }
+    d1<-km_new(d,a,k+1)
+    a<-update_para(d1,a0)
+  }
+}
+
+
+km_new<-function(x,a,k){
+  for(i in 1:ncol(x)){
+    x[,i]<-x[,i]*a[i]
+  }
+  cl<-kmeans(x,k)
+  return(cl)
+}
+
+
+judge<-function(x,cl,k){
+  y<-T
+  for(i in 1:k){
+    set<-cl$cluster==i
+    if(var(x[set,author.id])!=0){
+      y<-F
+    }
+  }
+  return(y)
+}
+```
+
