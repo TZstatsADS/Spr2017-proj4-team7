@@ -20,7 +20,7 @@ Those two papers can be found in the repository under doc/papers
 
 ```{r}
 
-packages.used=c("stringr", "tex2vec")
+packages.used=c("stringr", "tex2vec", "plyr")
 
 # Check packages that need to be installed.
 packages.needed=setdiff(packages.used, intersect(installed.packages()[,1], 
@@ -38,6 +38,7 @@ library(text2vec)
 library(caret)
 library(gmum.r)
 library(e1071)
+library(plyr)
 
 # Source Functions
 source("../lib/helper_load.R")
@@ -165,8 +166,14 @@ Note that we will scale the data and we are using the default value of epsilon (
 One-Versus-All Method 
 [TO DO - Implement CV manually for parameter C - add time]
 ```{r}
-svm.fit <- SVM(author.id~., data=dtm.train, 
-               class.type="one.versus.all", verbosity=0)
+# Fit Linear SVM
+start.time <- Sys.time()
+svm.linear.all <- cv.svm.all(dtm.train, K=5)
+end.time <- Sys.time()
+time.linear.all <- end.time - start.time
+
+svm.linear.all$best.performance
+svm.linear.all$best.parameter
 ```
 
 One-Versus-One Method
@@ -197,13 +204,23 @@ tune.svm.radial$best.performance
 tune.svm.radial$best.parameters
 ```
 
-[TO DO - Explain Comparisons of the methods]
-Given the results of this analysis, we will be using the ** scheme with a ** kernel. 
+```{r}
+print("Summary of the running times")
+print("SVM - One-versus-all - Linear")
+time.linear.all
+print("SVM - One-versus-one - Linear")
+time.linear.one
+print("SVM - One-versus-one - Radial")
+time.radial.one
+```
+
+The one versus all scheme is perfomring better, it has both a more efficient running time and a lower crosss validation error rate. Hence we will be keeping this method. Given the running time and the result of the radial kernel we didn't bother trying it with the one versus all shceme.
+Given the results of this analysis, we will be using the one versus all scheme with a linear kernel. 
 We will keep using this scheme until the end of the analysis but we will adapt the parameter C for each name set (using cross-validation).
 
 **Run model on all datasets for all attributes**
 
-For more clarity, we put everything into one function `run.model` which take into parameters the id of one name set, the dataset, and the attibute you want to use.
+For more clarity, we put everything into one function `run.svm` which take into parameters the id of one name set, the dataset, and the attibute you want to use.
 ```{r}
 results <- data.frame(paper=double(),
                       journal=double(), 
@@ -211,7 +228,7 @@ results <- data.frame(paper=double(),
                       hybrid=double())
 for (attribute in c("paper", "coauthors", "journal", "hybrid")){
   for (name_set in 1:length(dataset)){
-    results[name_set, attribute] <- run.model(name_set, attribute, dataset)
+    results[name_set, attribute] <- run.svm(name_set, attribute, dataset)
   }
 }
 ```

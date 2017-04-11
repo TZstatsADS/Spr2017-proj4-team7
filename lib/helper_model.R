@@ -1,6 +1,108 @@
 
 
-run.model <- function(i, attribute, dataset){
+cv.svm.all <- function(df, K){
+  # Run CV with K folds for the SVM function, one-versus-all scheme
+  # INPUT: Training set and number of folds
+  # OUTPUT: Best Parameters and Performance
+  
+  costs = c(0.1,1,10)
+  
+  n <- length(df)
+  n.fold <- floor(n/K)
+  
+  set.seed(123) # for reproducibility
+  inTrain <- createFolds(df$author.id, k=K, list = FALSE)
+  cv.error <- data.frame(cost=double(),
+                         fold=double(), 
+                         error=double())
+  
+  j = 0
+  # Comment - the SVM function with the one-versus all implementation doesn't support to take any variable into parameters, as a result we are doing it manually
+  cost = costs[1]
+  for (i in 1:K){
+    j = j+1
+    train.data <- df[inTrain != i,]
+    test.data <- df[inTrain == i,]
+    
+    svm.fit <- SVM(author.id~., data=train.data, kernel="linear", C=0.1,
+                   class.type="one.versus.all", verbosity=0)
+    
+    test.label <- test.data$author.id
+    test.data$author.id <- NULL
+    
+    pred <- predict(svm.fit, test.data)
+    cv.error[j, "fold"] <- i
+    cv.error[j, "cost"] <- cost
+    cv.error[j, "error"] <- 1-(sum(diag(table(pred, test.label)))/sum(table(pred, test.label)))
+  }
+  
+  cost = costs[2]
+  for (i in 1:K){
+    j = j+1
+    train.data <- df[inTrain != i,]
+    test.data <- df[inTrain == i,]
+    
+    svm.fit <- SVM(author.id~., data=train.data, kernel="linear", C=1,
+                   class.type="one.versus.all", verbosity=0)
+    
+    test.label <- test.data$author.id
+    test.data$author.id <- NULL
+    
+    pred <- predict(svm.fit, test.data)
+    cv.error[j, "fold"] <- i
+    cv.error[j, "cost"] <- cost
+    cv.error[j, "error"] <- 1-(sum(diag(table(pred, test.label)))/sum(table(pred, test.label)))
+  }
+  
+  cost = costs[3]
+  for (i in 1:K){
+    j = j+1
+    train.data <- df[inTrain != i,]
+    test.data <- df[inTrain == i,]
+    
+    svm.fit <- SVM(author.id~., data=train.data, kernel="linear", C=10,
+                   class.type="one.versus.all", verbosity=0)
+    
+    test.label <- test.data$author.id
+    test.data$author.id <- NULL
+    
+    pred <- predict(svm.fit, test.data)
+    cv.error[j, "fold"] <- i
+    cv.error[j, "cost"] <- cost
+    cv.error[j, "error"] <- 1-(sum(diag(table(pred, test.label)))/sum(table(pred, test.label)))
+  }
+  
+  cost = costs[4]
+  for (i in 1:K){
+    j = j+1
+    train.data <- df[inTrain != i,]
+    test.data <- df[inTrain == i,]
+    
+    svm.fit <- SVM(author.id~., data=train.data, kernel="linear", C=10,
+                   class.type="one.versus.all", verbosity=0)
+    
+    test.label <- test.data$author.id
+    test.data$author.id <- NULL
+    
+    pred <- predict(svm.fit, test.data)
+    cv.error[j, "fold"] <- i
+    cv.error[j, "cost"] <- cost
+    cv.error[j, "error"] <- 1-(sum(diag(table(pred, test.label)))/sum(table(pred, test.label)))
+  }
+  
+  result <- ddply(cv.error, c("cost"), summarise,
+                  mean = mean(error),
+                  sd   = sd(error)) 
+  
+  return(list(best.parameter = result$cost[which.min(result$mean)],
+              best.performance = min(result$mean)))
+}
+
+run.svm <- function(i, attribute, dataset){
+  # Run chosen model 
+  # INPUT:
+  # OUTPUT:
+  
   # Change Format - Data Frame
   df <- data.frame(matrix(unlist(dataset[[i]]), 
                           nrow=length(dataset[[i]]), byrow=T), 
