@@ -92,6 +92,9 @@ df1<-df[[1]]
 ##K-means
 
 ```{r}
+load(file="../output/feature1.Rdata")
+colnames(f1)[1:3]<-colnames(df1)[1:3]
+
 update1<-function(mu1,mu2,a){
   d<-abs(mu2-mu1)
   a<-a*(1+d/sum(d))
@@ -109,25 +112,26 @@ update2<-function(mu.t,mu.f,err,a){
 
 train<-function(df){
   y<-df$author.id
-  l<-levels(y)
+  l<-levels(factor(y))
   K<-length(l)
-  max.iteration<-10000
+  max.iteration<-10
   d<-ncol(df)-3
   lambda<-rep(0,d)
   lambda.new<-rep(1,d)
   weight<-rep(1,d)
-  j<-1
+  j<-0
   
   cluster<-list()
-  u<-matrix(nrow=K)
+  u<-list()
   first_point<-function(t){
-    return(c(t$author.id,which(as.numeric(t$paper.no)==1)))
+    return(t[1])
   }
-  d<-tapply(df,df$author.id,first_point)
+  d<-tapply(1:nrow(df),df$author.id,first_point)
   for(i in 1:K){
-    cluster[[i]]<-c(d[i,2])
-    u[i,]<-df[i,-c(1,2,3)]
+    cluster[[i]]<-c(d[i])
+    u[[i]]<-df[d[i],-c(1,2,3)]
   }
+  l<-df$author.id[d]
   
   dist<-function(a1,a2,l){
     n<-length(a1)
@@ -137,25 +141,32 @@ train<-function(df){
   }
   
   
-  while (dist(lambda,lambda.new,weight)>0.1 & j<=max.iteration){
+  while (dist(lambda,lambda.new,weight)>1 & j<=max.iteration){
+    j<-j+1
     lambda<-lambda.new
     for (i in 1:nrow(df)){
       distance<-c()
       for (k in 1:K){
-        distance<-c(distance,dist(df[i,-c(1,2,3)],u[k],lambda))
+        distance<-c(distance,dist(df[i,-c(1,2,3)],u[[k]],lambda))
       }
       m<-which.min(distance)
-      r<-which(d[,1]==df$author.id[i])
+      r<-which(l==df$author.id[i])
       if (m!=r){
-        #lambda.new<-update1(u[r,],u[m,],lambda)
-        lambda.new<-update2(u[r,],u[m,],df[i,-c(1,2,3)],lambda)
-        m<-df$author.id[i]
+        #lambda.new<-update1(u[[r]],u[[m]],lambda)
+        lambda.new<-update2(u[[r]],u[[m]],df[i,-c(1,2,3)],lambda)
+        m<-r
       }
       cluster[[m]]<-c(cluster[[m]],i)
-      u[m,]<-colMeans(df[cluster[[m]],-c(1,2,3)])
+      u[[m]]<-colMeans(df[cluster[[m]],-c(1,2,3)])
     }
   }
   
+  return(lambda.new)
+  
 }
+
+#test
+
+train(f1)
 ```
 
