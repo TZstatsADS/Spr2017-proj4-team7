@@ -1,5 +1,5 @@
 ---
-title: "project4_paper5_features"
+title: "project4_paper5_k-means"
 author: "Yaqin Li (yl3578)"
 date: "4/8/2017"
 output: html_document
@@ -114,7 +114,7 @@ train<-function(df){
   y<-df$author.id
   l<-levels(factor(y))
   K<-length(l)
-  max.iteration<-10
+  max.iteration<-100
   d<-ncol(df)-3
   lambda<-rep(0,d)
   lambda.new<-rep(1,d)
