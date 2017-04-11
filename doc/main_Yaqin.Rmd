@@ -15,7 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 packages<-c("stringr", "text2vec","plyr")
 
 # Check packages that need to be installed.
-packages.needed<-setdiff(packages.used, intersect(installed.packages()[,1], 
+packages.needed<-setdiff(packages, intersect(installed.packages()[,1], 
                                                  packages))
 
 # Install packages
@@ -86,6 +86,76 @@ df_form<-function(l){
 df<-llply(dataset,df_form)
 
 save(df,file="../output/dataframe.Rdata")
+df1<-df[[1]]
 ```
 
+##K-means
+
+```{r}
+update1<-function(mu1,mu2,a){
+  d<-abs(mu2-mu1)
+  a<-a*(1+d/sum(d))
+  return(a)
+}
+update2<-function(mu.t,mu.f,err,a){
+  d.t<-abs(mu.t-err)
+  d.f<-abs(mu.f-err)
+  a<-a*sqrt(d.f/d.t)
+  return(a)
+}
+
+
+
+
+train<-function(df){
+  y<-df$author.id
+  l<-levels(y)
+  K<-length(l)
+  max.iteration<-10000
+  d<-ncol(df)-3
+  lambda<-rep(0,d)
+  lambda.new<-rep(1,d)
+  weight<-rep(1,d)
+  j<-1
+  
+  cluster<-list()
+  u<-matrix(nrow=K)
+  first_point<-function(t){
+    return(c(t$author.id,which(as.numeric(t$paper.no)==1)))
+  }
+  d<-tapply(df,df$author.id,first_point)
+  for(i in 1:K){
+    cluster[[i]]<-c(d[i,2])
+    u[i,]<-df[i,-c(1,2,3)]
+  }
+  
+  dist<-function(a1,a2,l){
+    n<-length(a1)
+    x<-(a1-a2)^2
+    x<-l*x
+    return(sum(x))
+  }
+  
+  
+  while (dist(lambda,lambda.new,weight)>0.1 & j<=max.iteration){
+    lambda<-lambda.new
+    for (i in 1:nrow(df)){
+      distance<-c()
+      for (k in 1:K){
+        distance<-c(distance,dist(df[i,-c(1,2,3)],u[k],lambda))
+      }
+      m<-which.min(distance)
+      r<-which(d[,1]==df$author.id[i])
+      if (m!=r){
+        #lambda.new<-update1(u[r,],u[m,],lambda)
+        lambda.new<-update2(u[r,],u[m,],df[i,-c(1,2,3)],lambda)
+        m<-df$author.id[i]
+      }
+      cluster[[m]]<-c(cluster[[m]],i)
+      u[m,]<-colMeans(df[cluster[[m]],-c(1,2,3)])
+    }
+  }
+  
+}
+```
 
