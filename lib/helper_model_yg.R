@@ -56,9 +56,11 @@ run.model_v1 <- function(i, attribute, dataset){
   dtm.train <- cbind(df.train$author.id, dtm.train)
   names(dtm.train)[1] <- "author.id"
   
+  test_label=df.test$author.id
   # Fit model
-  tune_svm <- manualtune(author.id~., dtm.train,dtm.test,df.test)
-  acc <- tune_svm$error
+  tune_svm  <- SVM(author.id~., data=dtm.train,
+                                 class.type="one.versus.all",C=10, verbosity=0)
+
   
   return(acc)
 }

@@ -173,33 +173,22 @@ svm.pred<-predict(bsvm,dtm.test)
 error<-sum(svm.pred!=df.test$author.id)/length(df.test$author.id)
 #minimized when C=0.15
 
-
-
-
 ```
 
 
 
 ```{r}
-
-library(caret)
-fitControl <- trainControl(method = "cv",
-                            ## 10-fold CV...
-                            number = 5,
-                            verboseIter=FALSE
- )
- 
+#nearZeroVar(dtm.train,freqCut=100/0)
  model <- train(author.id~., data=dtm.train,
                 method = caret.gmumSvmLinear,
                 core = "libsvm",
                class.type="one.versus.all",
                 verbosity = 0, # no outputs
-               preProc = c("center", "scale"),
+               preProc = c("center", "scale","nzv"),
                 tuneLength = 8,             
-                trControl = fitControl,
-                tuneGrid = expand.grid(C=10^(c(-4:4)))
+                #trControl = fitControl,
+                tuneGrid = expand.grid(C=10^(c(-4:4)) )
                  # gmum.R parameter - pick library
- 
                 )
 ```
 
