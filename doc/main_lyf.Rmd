@@ -33,3 +33,22 @@ for(i in 1:length(data.files)){
 }
 ```
 
+## Text 1
+```{r}
+authorid<- c()
+for (i in 1:577) {
+  authorid[i] <- data_list[[1]][[i]][1]
+}
+authorid<-unlist(authorid)
+paperid<-c()
+for (i in 1:577) {
+  paperid[i] <- data_list[[1]][[i]][2]
+}
+paperid<-unlist(paperid)
+authorname<- "A Gupta"
+f1<- cbind(authorid,paperid,authorname,f.coauthor("A Gupta"),f.journal("A Gupta"), f.ptitle("A Gupta"))
+
+save(f1,file="../output/feature1.Rdata")
+
+```
+
