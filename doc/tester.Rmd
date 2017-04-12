@@ -1,9 +1,19 @@
-# helper_load
+---
+title: "R Notebook"
+output: html_notebook
+---
 
-library(stringr)
+```{r}
+temp <- as.list(readLines(paste0("../data/nameset/", files[1],".txt")))
+```
 
-clean.record <- function(line, author){
-  # Clean data files
+```{r}
+i =1
+
+i = i+1
+line <- temp[i]
+print(line)
+# Clean data files
   # INPUT: One raw line and th ename of the author
   # OUTPUT: List (author ID, paper ID, Coauthor List, Paper Title, Journal Title)
   
@@ -55,4 +65,5 @@ clean.record <- function(line, author){
               coauthors = coauthors, 
               paper = paper_title, 
               journal = journal_name))
-}
+```
+
