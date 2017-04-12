@@ -11,6 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Generate Feature for Paper 5
 ```{r}
+if (!require(stringr)) {install.packages(stringr)}
+library(stringr)
 source("../lib/lyf_helper.R")
 source("../lib/feature_helper.R")
 ```
@@ -35,20 +37,24 @@ for(i in 1:length(data.files)){
 
 ## Text 1
 ```{r}
+feature <- list()
+
+for (j in 1:14) {
 authorid<- c()
-for (i in 1:577) {
-  authorid[i] <- data_list[[1]][[i]][1]
+for (i in 1:length(data_list[[j]])) {
+  authorid[i] <- data_list[[j]][[i]][1]
 }
 authorid<-unlist(authorid)
 paperid<-c()
-for (i in 1:577) {
-  paperid[i] <- data_list[[1]][[i]][2]
+for (i in 1:length(data_list[[j]])) {
+  paperid[i] <- data_list[[j]][[i]][2]
 }
 paperid<-unlist(paperid)
-authorname<- "A Gupta"
-f1<- cbind(authorid,paperid,authorname,f.coauthor("A Gupta"),f.journal("A Gupta"), f.ptitle("A Gupta"))
+authorname<- query.list[j]
+feature[[j]]<- cbind(authorid,paperid,authorname,f.coauthor(authorname),f.journal(authorname), f.ptitle(authorname))
 
-save(f1,file="../output/feature1.Rdata")
+}
+save(feature,file="../output/feature.Rdata")
 
 ```
 
