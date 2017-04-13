@@ -20,7 +20,7 @@ Those two papers can be found in the repository under doc/papers
 
 ```{r}
 
-packages.used=c("stringr", "tex2vec", "caret", "gmum.r", "e1071", "plyr")
+packages.used=c("stringr", "tex2vec", "caret", "gmum.r", "e1071", "plyr", "tidyr", "gridExtra")
 
 # Check packages that need to be installed.
 packages.needed=setdiff(packages.used, intersect(installed.packages()[,1], 
@@ -39,6 +39,8 @@ library(caret)
 library(gmum.r)
 library(e1071)
 library(plyr)
+library(tidyr)
+library(gridExtra)
 
 # Source Functions
 source("../lib/helper_load.R")
@@ -216,7 +218,7 @@ We will keep using this scheme until the end of the analysis but we will adapt t
 **Run model on all datasets for all attributes**
 
 For more clarity, we put everything into one function `run.svm` which take into parameters the id of one name set, the dataset, and the attibute you want to use.
-```{r}
+```{r, warning=FALSE}
 results <- data.frame(paper=double(),
                       journal=double(), 
                       coauthors=double(),
@@ -228,17 +230,67 @@ for (attribute in c("paper", "coauthors", "journal", "hybrid")){
 }
 ```
 
-[TO DO]
-- Draw Table and BoxPlot from result table (for the table see table 6 in the paper) and save them in the output folder
-- Do Summary Table (see table 7 in the paper) and save it in the output folder
-- Overall comment on the reproducibility of this paper
-**Comments on the table**
+Now that we have the results for all dataset, let's draw a table of those results.
+```{r}
+
+table <- results
+table <- lapply(table[,], round, 3)
+table <- as.data.frame(table)
+table <- cbind(authors, table)
+table
+png(filename = "../output/svm_results.png", width = 400, height = 150, units = "mm", res=200)
+grid.table(table, rows=NULL)
+dev.off()
+```
+
+We can also display a box plot, showing the accuracy depending on the features used.
+```{r}
+results_long <- gather(results, feature, accuracy, paper:hybrid, factor_key=TRUE)
+
+boxplot.svm <- ggplot(results_long, aes(x = feature, y = accuracy)) +
+  geom_boxplot()
+boxplot.svm
+
+png(filename = "../output/svm_boxplot.png", width = 300, height = 150, units = "mm", res=200)
+boxplot.svm
+dev.off()
+```
+
+When analysing those results, we have to keep in mind that the datasets have different sizes.  
+```{r}
+info <- data.frame(author=character(),
+                      variations=double(), 
+                      train=double(),
+                      test=double())
+for (i in 1:length(authors)){
+  info[i, "variations"] <- length(dataset[[i]])
+  info[i, "train"] <- round(length(dataset[[i]])*0.80)
+  info[i, "test"] <- length(dataset[[i]])-round(length(dataset[[i]])*0.80)
+}
+
+info$author <- authors
+info
+
+png(filename = "../output/dataset_info.png", width = 400, height = 150, units = "mm", res=200)
+grid.table(info, rows=NULL)
+dev.off()
+
+```
+
+
+**Comments on the results**
+Anaylizing the boxplot, we see that the hybrid method gets the best results. If you want a faster method by using only one of the features, then the title of the paper is the best choice. 
 
 **Overall Comments on the Paper**
-This paper is easily reproduca
+This paper is easily reproducible. All steps are clearly stated in the paper. The features and the model used are entirely explained.  
+
 ## Step 3: Implement Paper 5
 
 **Brief Description of the Paper**
+This paper is using a completely different method. It is based on clustering and error-driven learning. 
+The authors are using a clusterig based method, but instead of using a completely unsupervised learning they used the groundtruth for each record to update teh weight of the parameters. That's the reason why this method is called "Error-Driven".  
+
+
 
 ## Step 4: Comparison of the two methods
 
