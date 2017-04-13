@@ -4,8 +4,8 @@
 
 Term: Spring 2017
 
-+ Team #
-+ Projec title: Lorem ipsum dolor sit amet
++ Team 7
++ Projec title: Name Disambiguation
 + Team members
 	+ team member 1
 	+ team member 2
