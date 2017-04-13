@@ -12,7 +12,7 @@ Term: Spring 2017
 	+ Li, Yaqin yl3578@columbia.edu
 	+ Lin, Yifei yl3594@columbia.edu
 	+ Schiltz, Marie ms5293@columbia.edu
-+ Project summary: In this project we implemented and compared two papers for name disambiguation of research paper. The goal is to differentiate researchers who have the same first initial and family name. The papers we implemented used two different mehtods [SVM](doc/papers/Han(2004).pdf) and an [Error-Driven Rnaking function](doc/papers/(Culotta).pdf)
++ Project summary: In this project we implemented and compared two papers for name disambiguation of research paper. The goal is to differentiate researchers who have the same first initial and family name. The papers we implemented used two different mehtods [SVM](doc/papers/Han(2004).pdf) and an [Error-Driven Rnaking function](doc/papers/Culotta(2007).pdf)
 + The main file of our report is accessible [here](doc/main.pdf) 
 	
 **Contribution statement**: ([default](doc/a_note_on_contributions.md)) All team members contributed equally in all stages of this project. All team members approve our work presented in this GitHub repository including this contributions statement. 
