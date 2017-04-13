@@ -115,7 +115,7 @@ train<-function(df){
   y<-df$author.id
   l<-levels(factor(y))
   K<-length(l)
-  max.iteration<-100
+  max.iteration<-3
   d<-ncol(df)-3
   lambda<-rep(0,d)
   lambda.new<-rep(1,d)
@@ -130,7 +130,7 @@ train<-function(df){
   d<-tapply(1:nrow(df),df$author.id,first_point)
   for(i in 1:K){
     cluster[[i]]<-c(d[i])
-    u[[i]]<-df[d[i],-c(1,2,3)]
+    u[[i]]<-unlist(df[d[i],-c(1,2,3)])
   }
   l<-df$author.id[d]
   
@@ -148,17 +148,21 @@ train<-function(df){
     for (i in 1:nrow(df)){
       distance<-c()
       for (k in 1:K){
-        distance<-c(distance,dist(df[i,-c(1,2,3)],u[[k]],lambda))
+        distance<-c(distance,dist(unlist(df[i,-c(1,2,3)]),u[[k]],lambda.new))
       }
       m<-which.min(distance)
       r<-which(l==df$author.id[i])
       if (m!=r){
-        #lambda.new<-update1(u[[r]],u[[m]],lambda)
-        lambda.new<-update2(u[[r]],u[[m]],df[i,-c(1,2,3)],lambda)
+        lambda.new<-update1(u[[r]],u[[m]],lambda.new)
+        #lambda.new<-update2(u[[r]],u[[m]],unlist(df[i,-c(1,2,3)]),lambda)
         m<-r
       }
       cluster[[m]]<-c(cluster[[m]],i)
-      u[[m]]<-colMeans(df[cluster[[m]],-c(1,2,3)])
+      u[[m]]<-unlist(df[cluster[[m]][1],-c(1,2,3)])
+      for(s in 2:length(cluster[[m]])){
+        u[[m]]<-u[[m]]+unlist(df[cluster[[m]][s],-c(1,2,3)])
+      }
+      u[[m]]<-u[[m]]/length(cluster[[m]])
     }
   }
   
