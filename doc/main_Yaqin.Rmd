@@ -102,9 +102,9 @@ update1<-function(mu1,mu2,a){
   return(a)
 }
 update2<-function(mu.t,mu.f,err,a){
-  d.t<-abs(mu.t-err)+0.001
-  d.f<-abs(mu.f-err)
-  a<-a*sqrt(d.f/d.t)
+  d.t<-a*abs(mu.t-err)+1
+  d.f<-a*abs(mu.f-err)+1
+  a<-a*(d.f/d.t)
   return(a)
 }
 
@@ -144,7 +144,7 @@ train<-function(df){
   }
   l<-y[d]
   
-  while (dist(lambda,lambda.new,weight)>0.1 & j<=max.iteration){
+  while (dist(lambda,lambda.new,weight)>0.01 & j<=max.iteration){
     j<-j+1
     lambda<-lambda.new
     for (i in 1:nrow(df)){
@@ -183,33 +183,56 @@ train<-function(df){
 }
 
 #test
-te<-sample(1:nrow(f1),10,replace = TRUE)
+te<-sample(1:nrow(f1),100,replace = TRUE)
 f2<-f1[te,]
 f1<-f1[-te,]
 time<-system.time(flambda<-train(f1))
 
-test<-function(df,lambda,K,label,center){
+# test<-function(df,lambda,K,label,center){
+#   y<-df[,1]
+#   df<-df[,-1:-3]
+#   df<-matrix(unlist(df),nrow(df),ncol(df))
+#   y2<-c()
+#   for (i in 1:nrow(df)){
+#       distance<-c()
+#       for (k in 1:K){
+#         distance<-c(distance,dist(df[i,],center[k,],lambda))
+#         
+#       }
+#       m<-which.min(distance)
+#       y2<-c(y2,m)
+#     }
+#   
+#   y2<-label[y2]
+#   accuracy<-mean(y==y2)
+#   return(list(y2,y,accuracy))
+# }
+
+test2<-function(df,lambda){
   y<-df[,1]
+  k<-length(unique(y))
   df<-df[,-1:-3]
   df<-matrix(unlist(df),nrow(df),ncol(df))
-  y2<-c()
-  for (i in 1:nrow(df)){
-      distance<-c()
-      for (k in 1:K){
-        distance<-c(distance,dist(df[i,],center[k,],lambda))
-        
-      }
-      m<-which.min(distance)
-      y2<-c(y2,m)
-    }
+  km_new<-function(x,a,k){
+  for(i in 1:ncol(x)){
+    x[,i]<-x[,i]*sqrt(a[i])
+  }
+  cl<-kmeans(x,k)
+  return(cl)
+}
+  y2<-km_new(df,lambda,k)
   
-  y2<-label[y2]
-  accuracy<-mean(y==y2)
-  return(list(y2,y,accuracy))
+  cluster<-function(x){
+    return(length(x)-max(table(x)))
+  }
+  
+  error<-tapply(y,y2$cluster,cluster)
+  return(list(y2$cluster,y,accuracy=(length(y)-sum(error))/length(y)))
 }
 
-result<-test(f2,flambda$lambda,flambda[[2]],flambda$label,flambda$center)
-result2<-test(f1,flambda$lambda,flambda[[2]],flambda$label,flambda$center)
+# result<-test(f2,flambda$lambda,flambda[[2]],flambda$label,flambda$center)
+# result2<-test(f1,flambda$lambda,flambda[[2]],flambda$label,flambda$center)
+re<-test2(f2,flambda$lambda)
 
 ```
 
