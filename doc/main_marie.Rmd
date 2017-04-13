@@ -20,7 +20,7 @@ Those two papers can be found in the repository under doc/papers
 
 ```{r}
 
-packages.used=c("stringr", "tex2vec", "plyr")
+packages.used=c("stringr", "tex2vec", "caret", "gmum.r", "e1071", "plyr")
 
 # Check packages that need to be installed.
 packages.needed=setdiff(packages.used, intersect(installed.packages()[,1], 
@@ -75,15 +75,11 @@ for(i in 1:length(files)){
 ## Step 2: Implement Paper 2
 
 **Brief Description of the Paper**
-[TO DO - Write Description - Marie: I already have a draft]
+This paper is using both SVM and Naive Bayes to perform Name Disambiguation. We will be studying the SVM part.   
+The author consider each individual author has a class, and perform multiclass one-versus-all SVM to separate the differetn classes. The feeatures used are multiples. They first consider the co-authors, then the title of the paper and finally the journal. Additionally they test an hybrid method using all those features.  
+We will reproduce those tests on the datasets that we have.  
 
 **Feature Creation**
-```{r}
-# Parameters
-i <- 1
-attribute <- "paper"
-```
-
 The very first step is to process the clean data and to extract the necessary features. At first, we will conduct the evaluation of the paper on the first dataset only (the name set is A Gupta)
 
 We will process the data in a dataframe.
@@ -149,7 +145,7 @@ dim(dtm.train)
 As you can see, the DTM has `r nrow(dtm.train)` rows, equal to the number of citations, and `r ncol(dtm.train)`, equal to the number of unique terms excluding stopwords.
 
 It's always easier to work with dataframe to pass them to a machine learning function, so we'll change the format of the document-term matrices.
-```{r}
+```{r, warning=FALSE}
 dtm.test <- as.data.frame(as.matrix(dtm.test))
 dtm.train <- as.data.frame(as.matrix(dtm.train))
 # Add labels to the trainnig set
@@ -164,7 +160,6 @@ The paper uses a SVM classifier to differentiate the differetn homonyms. They us
 Note that we will scale the data and we are using the default value of epsilon (0.1) which ensures that if a feature is not seen in the training set, it will not be associated a probability of 0 when discovered in the test set. [TO DO - More specific explanation of this point]
 
 One-Versus-All Method 
-[TO DO - Implement CV manually for parameter C - add time]
 ```{r}
 # Fit Linear SVM
 start.time <- Sys.time()
@@ -178,7 +173,7 @@ svm.linear.all$best.parameter
 
 One-Versus-One Method
 We use the e1071 library, this library implemetns the one-versus-one method for SVM. The tune function uses by default 10-folds cross validation.
-```{r}
+```{r, warning=FALSE}
 # Fit Linear SVM
 start.time <- Sys.time()
 tune.svm.linear <- tune(svm, author.id~., 
@@ -191,7 +186,7 @@ tune.svm.linear$best.parameters
 ```
 
 
-```{r}
+```{r, warning=FALSE}
 # Fit Radial SVM
 start.time <- Sys.time()
 tune.svm.radial <- tune(svm, author.id~., data=dtm.train, kernel="radial", 
@@ -237,8 +232,10 @@ for (attribute in c("paper", "coauthors", "journal", "hybrid")){
 - Draw Table and BoxPlot from result table (for the table see table 6 in the paper) and save them in the output folder
 - Do Summary Table (see table 7 in the paper) and save it in the output folder
 - Overall comment on the reproducibility of this paper
-- Check Cleaning of data
+**Comments on the table**
 
+**Overall Comments on the Paper**
+This paper is easily reproduca
 ## Step 3: Implement Paper 5
 
 **Brief Description of the Paper**

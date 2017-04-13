@@ -158,10 +158,24 @@ run.svm <- function(i, attribute, dataset){
   names(dtm.train)[1] <- "author.id"
   
   # Fit model
-  tune.svm <- tune(svm, author.id~., data=dtm.train, kernel="linear", 
-                          ranges=list(cost=c(0.1,1,10)))
+  result <- cv.svm.all(dtm.train, K=5)
+  C <- result$best.parameter
+  if(C==0.1){
+    svm.fit <- SVM(author.id~., data=dtm.train, kernel="linear", C=0.1,
+                   class.type="one.versus.all", verbosity=0)
+  }
+  else if(C==1){
+    svm.fit <- SVM(author.id~., data=dtm.train, kernel="linear", C=1,
+                   class.type="one.versus.all", verbosity=0)
+  }
+  else if(C==10){
+    svm.fit <- SVM(author.id~., data=dtm.train, kernel="linear", C=10,
+                   class.type="one.versus.all", verbosity=0)
+  }
+  #tune.svm <- tune(svm, author.id~., data=dtm.train, kernel="linear", 
+  #                        ranges=list(cost=c(0.1,1,10)))
   
-  preds <- predict(tune.svm$best.model, dtm.test)
+  preds <- predict(svm.fit, dtm.test)
   acc <- sum(diag(table(preds, df.test$author.id)))/nrow(df.test)
   
   return(acc)
