@@ -279,7 +279,7 @@ dev.off()
 
 
 **Comments on the results**
-Anaylizing the boxplot, we see that the hybrid method gets the best results. If you want a faster method by using only one of the features, then the title of the paper is the best choice. 
+Anaylizing the boxplot, we see that the hybrid method gets the best results. This methods takes as features, the title of the journal, the coauthors and the title of the paper. If you want a faster method by using only one of the features, then the title of the paper is the best choice. 
 
 **Overall Comments on the Paper**
 This paper is easily reproducible. All steps are clearly stated in the paper. The features and the model used are entirely explained.  
