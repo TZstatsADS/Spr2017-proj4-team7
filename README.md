@@ -5,14 +5,15 @@
 Term: Spring 2017
 
 + Team 7
-+ Projec title: Name Disambiguation
++ Projec title: Name Disambiguation _ Implementation of Research members
 + Team members
-	+ team member 1
-	+ team member 2
-	+ team member 3
-	+ team member 4
-	+ team member 5
-+ Project summary: Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+	+ Chen, Liangbin lc3190@columbia.edu
+	+ Gao, Yue yg2474@columbia.edu
+	+ Li, Yaqin yl3578@columbia.edu
+	+ Lin, Yifei yl3594@columbia.edu
+	+ Schiltz, Marie ms5293@columbia.edu
++ Project summary: In this project we implemented and compared two papers for name disambiguation of research paper. The goal is to differentiate researchers who have the same first initial and family name. The papers we implemented used two different mehtods [SVM](doc/papers/Han(2004).pdf) and an [Error-Driven Rnaking function](doc/papers/(Culotta).pdf)
++ The main file of our report is accessible [here](doc/main.pdf) 
 	
 **Contribution statement**: ([default](doc/a_note_on_contributions.md)) All team members contributed equally in all stages of this project. All team members approve our work presented in this GitHub repository including this contributions statement. 
 
