@@ -2,7 +2,9 @@
 title: "Project 4 - Author Name Disambiguation"
 author: "Marie Schiltz"
 date: "4/7/2017"
-output: pdf_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 In this report we will study different methods of **Author Name Disambiguation**. It's the problem of determining whether records in a publications database refer to the same person.
@@ -162,7 +164,7 @@ The paper uses a SVM classifier to differentiate the differetn homonyms. They us
 Note that we will scale the data and we are using the default value of epsilon (0.1) which ensures that if a feature is not seen in the training set, it will not be associated a probability of 0 when discovered in the test set. [TO DO - More specific explanation of this point]
 
 One-Versus-All Method 
-```{r}
+```{r, eval=FALSE}
 # Fit Linear SVM
 start.time <- Sys.time()
 svm.linear.all <- cv.svm.all(dtm.train, K=5)
@@ -175,7 +177,7 @@ svm.linear.all$best.parameter
 
 One-Versus-One Method
 We use the e1071 library, this library implemetns the one-versus-one method for SVM. The tune function uses by default 10-folds cross validation.
-```{r, warning=FALSE}
+```{r, warning=FALSE, eval=FALSE}
 # Fit Linear SVM
 start.time <- Sys.time()
 tune.svm.linear <- tune(svm, author.id~., 
@@ -188,7 +190,7 @@ tune.svm.linear$best.parameters
 ```
 
 
-```{r, warning=FALSE}
+```{r, warning=FALSE, eval=FALSE}
 # Fit Radial SVM
 start.time <- Sys.time()
 tune.svm.radial <- tune(svm, author.id~., data=dtm.train, kernel="radial", 
@@ -201,7 +203,7 @@ tune.svm.radial$best.performance
 tune.svm.radial$best.parameters
 ```
 
-```{r}
+```{r, eval=FALSE}
 print("Summary of the running times")
 print("SVM - One-versus-all - Linear")
 time.linear.all
@@ -218,7 +220,7 @@ We will keep using this scheme until the end of the analysis but we will adapt t
 **Run model on all datasets for all attributes**
 
 For more clarity, we put everything into one function `run.svm` which take into parameters the id of one name set, the dataset, and the attibute you want to use.
-```{r, warning=FALSE}
+```{r, warning=FALSE, eval=FALSE}
 results <- data.frame(paper=double(),
                       journal=double(), 
                       coauthors=double(),
@@ -231,8 +233,7 @@ for (attribute in c("paper", "coauthors", "journal", "hybrid")){
 ```
 
 Now that we have the results for all dataset, let's draw a table of those results.
-```{r}
-
+```{r, eval=FALSE}
 table <- results
 table <- lapply(table[,], round, 3)
 table <- as.data.frame(table)
@@ -242,9 +243,10 @@ png(filename = "../output/svm_results.png", width = 400, height = 150, units = "
 grid.table(table, rows=NULL)
 dev.off()
 ```
+image: ![](../output/svm_results.png) 
 
 We can also display a box plot, showing the accuracy depending on the features used.
-```{r}
+```{r, eval=FALSE}
 results_long <- gather(results, feature, accuracy, paper:hybrid, factor_key=TRUE)
 
 boxplot.svm <- ggplot(results_long, aes(x = feature, y = accuracy)) +
@@ -255,9 +257,10 @@ png(filename = "../output/svm_boxplot.png", width = 300, height = 150, units = "
 boxplot.svm
 dev.off()
 ```
+image: ![](../output/svm_boxplot.png) 
 
 When analysing those results, we have to keep in mind that the datasets have different sizes.  
-```{r}
+```{r, eval=FALSE}
 info <- data.frame(author=character(),
                       variations=double(), 
                       train=double(),
@@ -276,7 +279,7 @@ grid.table(info, rows=NULL)
 dev.off()
 
 ```
-
+image: ![](../output/dataset_info.png) 
 
 **Comments on the results**
 Anaylizing the boxplot, we see that the hybrid method gets the best results. This methods takes as features, the title of the journal, the coauthors and the title of the paper. If you want a faster method by using only one of the features, then the title of the paper is the best choice. 
@@ -321,7 +324,7 @@ Generate Features:
 f.coauthor (function): takes the name of author as input and generate coauthor features. Specifically, each row is a record and each column is a coauthor. If one record contains one coauthor, the corresponding value is 1. Otherwise, it is 0. Furthermore, we eliminate coauthor who only appears once in the date set.
 f.journal (function): takes the name of author as input and generate journal features. Specifically, each row is a record and each column is a journal. If one record contains one journal, the corresponding value is 1. Otherwise, it is 0. Furthermore, we eliminate journal that only appears once in the date set.
 f.ptitle (function): takes the name of author as input and generate paper title features. Specifically, each row is a record and each column is a key word. 
-```{r}
+```{r, eval=FALSE}
 feature <- list()
 
 for (j in 1:14) {
@@ -344,7 +347,11 @@ feature[[j]]<- cbind(authorid,paperid,authorname,f.coauthor(authorname),f.journa
 
 **Model**
 ##K-means
-```{r}
+
+Clusterwise Score function:
+$S_c=\sum_{x_j\in k}\sum_{i=1}^d\Lambda_i(x_{ji}-\mu_k)^2$
+
+```{r echo=FALSE}
 
 #update parameter function
 update2<-function(mu.t,mu.f,err,a){
@@ -444,15 +451,18 @@ test2<-function(df,lambda){
   return(list(y2$cluster,y,accuracy=(length(y)-sum(error))/length(y)))
 }
 
-re<-test2(f2,flambda$lambda)
+#re<-test2(f2,flambda$lambda)
 
 ```
 
 
 **evaluation:error and running time**
-
 ```{r}
 load(file="../output/feature.Rdata")
+```
+
+```{r,eval=FALSE}
+
 time<-c()
 accuracy<-c()
 
@@ -475,3 +485,21 @@ for(i in 1:14){
 
 ## Step 4: Comparison of the two methods
 
+```{r}
+load(file="../output/accuracy.Rdata") # e
+load(file="../output/svm result.Rdata") # results
+accuracy_compare <- cbind(results,e[1:14,1])
+colnames(accuracy_compare) <- c("P2: Paper Title", "P2: Journal", "P2: Coauthor", "P2: hybird", "P5: Hybird")
+boxplot(accuracy_compare)
+
+
+```
+
+Method | SVM - One-versus-all - Linear | SVM - One-versus-one - Linear | SVM - One-versus-one - Radial | Paper 5 - Hybird
+------------- | ------------- | ------------- | ------------- | -------------
+Time | 24.83177 sec | 44.63247 sec | 3.923072 min | 9.158163 min
+
+In paper 2, svm with all three types of features yields a higher accuracy rate than svm with only one type of feature.
+In general, svm of paper 2 yields a higher accuracy rate than what paper 5 produces.
+In terms of system running time, method of paper 5 requires longer time to train compared to paper 2.
+In conclusion, SVM of paper 2 is better under this scenario!
