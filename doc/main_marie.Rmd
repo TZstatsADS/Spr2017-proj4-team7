@@ -20,7 +20,7 @@ Those two papers can be found in the repository under doc/papers
 
 ## Step 0: Load Pakages and Functions
 
-```{r}
+```{r, warning=FALSE}
 
 packages.used=c("stringr", "tex2vec", "caret", "gmum.r", "e1071", "plyr", "tidyr", "gridExtra")
 
@@ -53,8 +53,8 @@ source("../lib/helper_model.R")
 ## Step 1: Load and Process data
 
 The dataset is downloaded from http://clgiles.ist.psu.edu/data/
-- There are 14 .txt files in the data folder. Each file is a collection of ambiguous names and associtated citations. e.g. AGupta.txt is the citation files of 26 “A. Gupta”s. The 14 canonical names are top ranked ambiguous names, such as “J. Lee”, “J Smith”, “S. Lee”and “Y. Chen” from the DBLP bibliography.
-- The datasets are pre-processed as follows. All the author names in the citations were simpli- fied to first name initial and last name. For example, “Yong-Jik Kim” was simplified to “Y. Kim”. A reason for such simplification is that the first name initial and last name format is popular in citation records. Publication dates are eliminate from citations.
+- There are 14 .txt files in the data folder. Each file is a collection of ambiguous names and associtated citations. e.g. AGupta.txt is the citation files of 26 “A. Gupta”s. The 14 canonical names are top ranked ambiguous names, such as “J. Lee�?, “J Smith�?, “S. Lee”and “Y. Chen�? from the DBLP bibliography.
+- The datasets are pre-processed as follows. All the author names in the citations were simpli- fied to first name initial and last name. For example, “Yong-Jik Kim�? was simplified to “Y. Kim�?. A reason for such simplification is that the first name initial and last name format is popular in citation records. Publication dates are eliminate from citations.
 - All citations in the raw data are in the format of
 clusterid citationid authors;authors;...<>paper title<>publication venue title, where clusterid indicates the canonical author id.
 
@@ -108,7 +108,7 @@ it <- itoken(df$paper,
 vocab <- create_vocabulary(it, stopwords = c("a", "an", "the", "in", "on",
                                              "at", "of", "above", "under"))
 ```
-Here, we remove pre-defined stopwords, the words like “a”, “the”, “in”, “I”, “you”, “on”, etc, which do not provide much useful information. 
+Here, we remove pre-defined stopwords, the words like “a�?, “the�?, “in�?, “I�?, “you�?, “on�?, etc, which do not provide much useful information. 
 
 Before processing the features, we need to split the training and the testing sets. Each author is considered as a different class. To unsure balanceness, we will split data per class. We will put 80% of each record per author (not per name set) and put it on the training set.
 ```{r}
@@ -164,7 +164,7 @@ The paper uses a SVM classifier to differentiate the differetn homonyms. They us
 Note that we will scale the data and we are using the default value of epsilon (0.1) which ensures that if a feature is not seen in the training set, it will not be associated a probability of 0 when discovered in the test set. [TO DO - More specific explanation of this point]
 
 One-Versus-All Method 
-```{r, eval=FALSE}
+```{r}
 # Fit Linear SVM
 start.time <- Sys.time()
 svm.linear.all <- cv.svm.all(dtm.train, K=5)
@@ -177,7 +177,7 @@ svm.linear.all$best.parameter
 
 One-Versus-One Method
 We use the e1071 library, this library implemetns the one-versus-one method for SVM. The tune function uses by default 10-folds cross validation.
-```{r, warning=FALSE, eval=FALSE}
+```{r, warning=FALSE}
 # Fit Linear SVM
 start.time <- Sys.time()
 tune.svm.linear <- tune(svm, author.id~., 
@@ -190,7 +190,7 @@ tune.svm.linear$best.parameters
 ```
 
 
-```{r, warning=FALSE, eval=FALSE}
+```{r, warning=FALSE}
 # Fit Radial SVM
 start.time <- Sys.time()
 tune.svm.radial <- tune(svm, author.id~., data=dtm.train, kernel="radial", 
@@ -203,7 +203,7 @@ tune.svm.radial$best.performance
 tune.svm.radial$best.parameters
 ```
 
-```{r, eval=FALSE}
+```{r}
 print("Summary of the running times")
 print("SVM - One-versus-all - Linear")
 time.linear.all
@@ -351,7 +351,7 @@ feature[[j]]<- cbind(authorid,paperid,authorname,f.coauthor(authorname),f.journa
 Clusterwise Score function:
 $S_c=\sum_{x_j\in k}\sum_{i=1}^d\Lambda_i(x_{ji}-\mu_k)^2$
 
-```{r echo=FALSE}
+```{r}
 
 #update parameter function
 update2<-function(mu.t,mu.f,err,a){
