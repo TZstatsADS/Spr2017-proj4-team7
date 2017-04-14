@@ -183,7 +183,7 @@ load(file="../output/feature.Rdata")
 time<-c()
 accuracy<-c()
 
-for(i in 8:14){
+for(i in 1:14){
   f1<-feature[[i]]
   te<-sample(1:nrow(f1),100,replace = TRUE)
   f2<-f1[te,]
@@ -196,6 +196,9 @@ for(i in 8:14){
   accuracy<-c(accuracy,re$accuracy)
 }
 
-
+e<-cbind(accuracy,time)
+m<-colMeans(e)
+e<-rbind(e,m)
+save(e,file="../output/accuracy.Rdata")
 ```
 

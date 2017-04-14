@@ -1,0 +1,3 @@
+load("/Users/liyaqin/Documents/graduate/applied_data_science/Spr2017-proj4-team7/output/accuracy.Rdata")
+accuracy
+accuracy.Rdata
