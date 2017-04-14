@@ -183,12 +183,15 @@ load(file="../output/feature.Rdata")
 time<-c()
 accuracy<-c()
 
-for(i in 1:14){
+for(i in 8:14){
   f1<-feature[[i]]
   te<-sample(1:nrow(f1),100,replace = TRUE)
   f2<-f1[te,]
   #f1<-f1[-te,]
-  time<-c(time,system.time(flambda<-train(f1)))
+  t1<-Sys.time()
+  flambda<-train(f1)
+  t2<-Sys.time()
+  time<-c(time,t2-t1)
   re<-test2(f2,flambda$lambda)
   accuracy<-c(accuracy,re$accuracy)
 }
